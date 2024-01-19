@@ -12,6 +12,7 @@ import java.util.Vector;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.swing.border.Border;
 
 public class Racing { // incorporating audio, starting traffic light, start menu with car selection
     public Racing() {
@@ -51,8 +52,36 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
-    private static void backgroundDraw(){
+    // Method to set rounded border on JButton
+    private static void setRoundedBorder(AbstractButton button, int radius) {
+        Border border = BorderFactory.createEmptyBorder(5, 15, 5, 15); // Add padding if needed
+        Border roundedBorder = new RoundBorder(radius);
+        button.setBorder(BorderFactory.createCompoundBorder(border, roundedBorder));
+    }
 
+    // Custom Border class for rounded corners
+    private static class RoundBorder implements Border {
+        private int radius;
+
+        public RoundBorder(int radius) {
+            this.radius = radius;
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return new Insets(this.radius+2, this.radius+2, this.radius+2, this.radius+2);
+        }
+
+        @Override
+        public boolean isBorderOpaque() {
+            return true;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            g.setColor(c.getBackground());
+            g.fillRoundRect(x, y, width, height, radius, radius);
+        }
     }
 
     private static class ImageObject{
@@ -120,7 +149,39 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
-    private static class StartGame{
+    private static class PlayMusic implements Runnable{
+        public PlayMusic() {
+            run();
+        }
+
+        @Override
+        public void run() {
+            playSound();
+        }
+
+        private void playSound(){
+            File mainMusic = endgame ?
+                    new File("endBGM.mp3") : new File("bgm.mp3");
+            AudioInputStream inputStream = null;
+
+            try {
+                Clip clip = AudioSystem.getClip();
+                inputStream = AudioSystem.getAudioInputStream(mainMusic);
+                clip.open(inputStream);
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    private static class StartGame implements ActionListener{
+        public StartGame(){
+
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+
+        }
     }
 
     private static class PlayerMove{
@@ -162,12 +223,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
 
-
-
-    private static void playMusic() {
-
-    }
-
     private static void launch(){
         appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         appFrame.setSize(1280, 720);
@@ -178,6 +233,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         JButton startGameButton = new JButton("Start Game");
         menuBar.add(startGameButton);
+        startGameButton.addActionListener(new StartGame());
 
         JButton carSelectButton = new JButton("Select Car");
         menuBar.add(carSelectButton);
@@ -195,7 +251,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     public static void main(String[] args) {
         setup();
         launch();
-        playMusic();
+        new PlayMusic();
     }
     private static boolean endgame;
     private static BufferedImage background;
