@@ -37,7 +37,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         // implement initial player locations
 
-        try {
+        try { // image processing
             background = ImageIO.read(new File ("track.png"));
             supra = ImageIO.read(new File("supra.png"));
             porche = ImageIO.read(new File("porche.png"));
