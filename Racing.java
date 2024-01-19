@@ -1,10 +1,6 @@
-package PACKAGE_NAME;
 import java.awt.*;
-
 import javax.swing.*;
-
 import javax.imageio.ImageIO;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -12,6 +8,10 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.Vector;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 
 public class Racing { // incorporating audio, starting traffic light, start menu with car selection
     public Racing() {
@@ -29,8 +29,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         endgame = false;
 
 
-        //lap count
-        //best time 2 dec
+        // lap count
+        // best time 2 dec
         // p1Speed 0 dec
         // p2Speed 0 dec
 
@@ -162,9 +162,10 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
 
-    public static void main(String[] args) {
-        setup();
-        launch();
+
+
+    private static void playMusic() {
+
     }
 
     private static void launch(){
@@ -191,6 +192,11 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame.setVisible(true);
     }
 
+    public static void main(String[] args) {
+        setup();
+        launch();
+        playMusic();
+    }
     private static boolean endgame;
     private static BufferedImage background;
     private static BufferedImage supra;
