@@ -65,38 +65,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
-    // Method to set rounded border on JButton
-    private static void setRoundedBorder(AbstractButton button, int radius) {
-        Border border = BorderFactory.createEmptyBorder(5, 15, 5, 15); // Add padding if needed
-        Border roundedBorder = new RoundBorder(radius);
-        button.setBorder(BorderFactory.createCompoundBorder(border, roundedBorder));
-    }
-
-    // Custom Border class for rounded corners
-    private static class RoundBorder implements Border {
-        private int radius;
-
-        public RoundBorder(int radius) {
-            this.radius = radius;
-        }
-
-        @Override
-        public Insets getBorderInsets(Component c) {
-            return new Insets(this.radius+2, this.radius+2, this.radius+2, this.radius+2);
-        }
-
-        @Override
-        public boolean isBorderOpaque() {
-            return true;
-        }
-
-        @Override
-        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-            g.setColor(c.getBackground());
-            g.fillRoundRect(x, y, width, height, radius, radius);
-        }
-    }
-
     private static class ImageObject{
         private double x;
         private double y;
@@ -207,7 +175,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         public StartGame(){
 
         }
-
         @Override
         public void actionPerformed(ActionEvent e) {
             menuBar.setVisible(false);
@@ -333,6 +300,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
+    // Option window to change the volume of the game
     private static class Options implements ActionListener {
         private void popup(){
             System.out.println("Open options");
@@ -371,7 +339,45 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
+    // Main Menu which has the selection buttons
+    private static class MainMenu implements Runnable{
+        public MainMenu(){
+            run();
+        }
+        @Override
+        public void run() {
+            System.out.println("main menu");
+            menuBar = new JPanel();
+            menuBar.setBackground(Color.DARK_GRAY);
+            menuBar.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
 
+            JButton startGameButton = createButton("Start Game", new StartGame());
+            JButton carSelectButton = createButton("Select Car", null);
+            JButton optionsButton = createButton("Options", new Options());
+            JButton exitButton = createButton("Quit Game", new ConfirmQuit());
+
+            menuBar.add(startGameButton);
+            menuBar.add(carSelectButton);
+            menuBar.add(optionsButton);
+            menuBar.add(exitButton);
+
+            menuBar.setVisible(true);
+            appFrame.add(menuBar, BorderLayout.SOUTH);
+        }
+    }
+
+    // basic function to create custom button
+    private static JButton createButton(String title, ActionListener actionListener) {
+        JButton button = new JButton(title);
+
+        if (actionListener != null) {
+            button.addActionListener(actionListener);
+        }
+
+        return button;
+    }
+
+    // detects which key was pressed and released
     private static void bindKey(JPanel myPanel, String input) {
         myPanel.getInputMap(IFW).put(KeyStroke.getKeyStroke("pressed " + input), input + " pressed");
         myPanel.getActionMap().put(input + " pressed", new KeyPressed(input));
@@ -380,42 +386,17 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         myPanel.getActionMap().put(input + " released", new KeyReleased(input));
     }
 
-    private static class MainMenu{
-        public MainMenu(){
-            System.out.println("main menu");
-            menuBar = new JPanel();
-            menuBar.setBackground(Color.GREEN);
-            menuBar.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
-
-            JButton startGameButton = new JButton("Start Game");
-            menuBar.add(startGameButton);
-            startGameButton.addActionListener(new StartGame());
-
-            JButton carSelectButton = new JButton("Select Car");
-            menuBar.add(carSelectButton);
-
-            JButton optionsButton = new JButton("Options");
-            menuBar.add(optionsButton);
-            optionsButton.addActionListener(new Options());
-
-            JButton exitButton = new JButton("Quit Game");
-            menuBar.add(exitButton);
-            exitButton.addActionListener(new ConfirmQuit());
-
-            menuBar.setVisible(true);
-            appFrame.add(menuBar, BorderLayout.SOUTH);
-        }
-    }
     public static void main(String[] args) {
         setup();
+        new MainMenu();
+
         appFrame.setLocationRelativeTo(null);
         appFrame.setVisible(true);
-
-        new MainMenu();
 
         Music audio = new Music();
         audio.playSound();
     }
+
     private static boolean endgame;
     private static BufferedImage background;
     private static BufferedImage supra;
