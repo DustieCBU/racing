@@ -1,4 +1,5 @@
 import java.awt.*;
+import javax.sound.sampled.FloatControl;
 import javax.swing.*;
 import javax.imageio.ImageIO;
 import java.awt.event.ActionEvent;
@@ -23,19 +24,31 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame = new JFrame("Racing");
         XOFFSET = 0;
         YOFFSET = 40;
-        WINWIDTH = 500;
-        WINHEIGHT = 500;
+        WINWIDTH = 1280;
+        WINHEIGHT = 720;
         pi = 3.14159265358979;
         twoPi = 2.0 * 3.14159265358979;
         endgame = false;
 
+        appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        appFrame.setSize(WINWIDTH, WINHEIGHT);
 
+        JPanel keyPanel = new JPanel();
+
+        bindKey(keyPanel, "W");
+        bindKey(keyPanel, "A");
+        bindKey(keyPanel, "S");
+        bindKey(keyPanel, "D");
+        bindKey(keyPanel, "UP");
+        bindKey(keyPanel, "DOWN");
+        bindKey(keyPanel, "LEFT");
+        bindKey(keyPanel, "RIGHT");
+
+        appFrame.add(keyPanel);
         // lap count
         // best time 2 dec
         // p1Speed 0 dec
         // p2Speed 0 dec
-
-
         // implement initial player locations
 
         try { // image processing
@@ -154,8 +167,10 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
-    private static class Music implements Runnable{
+    private static class Music implements Runnable {
+
         public Music() {
+            musicVolumeMultiplier = 0.2f;
         }
 
         @Override
@@ -172,6 +187,14 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 Clip clip = AudioSystem.getClip();
                 inputStream = AudioSystem.getAudioInputStream(song);
                 clip.open(inputStream);
+
+                // Get the volume control from the clip
+                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+
+                // Adjust the volume by providing a multiplier
+                float currentGain = gainControl.getValue();
+                float targetGain = currentGain + (20.0f * (float) Math.log10(musicVolumeMultiplier));
+                gainControl.setValue(targetGain);
                 clip.start();
                 System.out.println("Playing");
             } catch (Exception e) {
@@ -187,6 +210,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            menuBar.setVisible(false);
             endgame = true;
             endgame =  false;
             wPressed = false;
@@ -195,6 +219,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             dPressed = false;
 
             Thread t1 = new Thread(new PlayerMover());
+            t1.start();
         }
     }
 
@@ -293,10 +318,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
     private static class ConfirmQuit implements ActionListener {
-        private ConfirmQuit(){
-
-        }
-
         public void popup(){
             int quit = JOptionPane.showConfirmDialog(null, "Are you sure you want to quit?",
                     "Confirm Quit",
@@ -309,6 +330,29 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         public void actionPerformed(ActionEvent e) {
             popup();
             System.out.println("Prompt Quit");
+        }
+    }
+
+    private static class Options implements ActionListener {
+        private void popup(){
+            System.out.println("Open options");
+
+            JFrame optionsFrame = new JFrame("Options");
+            optionsFrame.setSize(200, 200);
+            optionsFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+            JPanel optionsPanel = new JPanel();
+            optionsPanel.setBackground(Color.LIGHT_GRAY);
+
+            optionsFrame.add(optionsPanel);
+
+            // Center the optionsFrame on the screen
+            optionsFrame.setLocationRelativeTo(null);
+
+            optionsFrame.setVisible(true);
+        }
+        public void actionPerformed(ActionEvent e) {
+            popup();
         }
     }
 
@@ -328,31 +372,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
 
-    private static void launch(){
-        appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        appFrame.setSize(1280, 720);
-
-        JPanel menuBar = new JPanel();
-        menuBar.setBackground(Color.GREEN);
-        menuBar.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
-
-        JButton startGameButton = new JButton("Start Game");
-        menuBar.add(startGameButton);
-        startGameButton.addActionListener(new StartGame());
-
-        JButton carSelectButton = new JButton("Select Car");
-        menuBar.add(carSelectButton);
-
-        JButton exitButton = new JButton("Quit Game");
-        menuBar.add(exitButton);
-        exitButton.addActionListener(new ConfirmQuit());
-
-        appFrame.add(menuBar, BorderLayout.SOUTH);
-
-        appFrame.setLocationRelativeTo(null);
-        appFrame.setVisible(true);
-    }
-
     private static void bindKey(JPanel myPanel, String input) {
         myPanel.getInputMap(IFW).put(KeyStroke.getKeyStroke("pressed " + input), input + " pressed");
         myPanel.getActionMap().put(input + " pressed", new KeyPressed(input));
@@ -361,23 +380,41 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         myPanel.getActionMap().put(input + " released", new KeyReleased(input));
     }
 
+    private static class MainMenu{
+        public MainMenu(){
+            System.out.println("main menu");
+            menuBar = new JPanel();
+            menuBar.setBackground(Color.GREEN);
+            menuBar.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+
+            JButton startGameButton = new JButton("Start Game");
+            menuBar.add(startGameButton);
+            startGameButton.addActionListener(new StartGame());
+
+            JButton carSelectButton = new JButton("Select Car");
+            menuBar.add(carSelectButton);
+
+            JButton optionsButton = new JButton("Options");
+            menuBar.add(optionsButton);
+            optionsButton.addActionListener(new Options());
+
+            JButton exitButton = new JButton("Quit Game");
+            menuBar.add(exitButton);
+            exitButton.addActionListener(new ConfirmQuit());
+
+            menuBar.setVisible(true);
+            appFrame.add(menuBar, BorderLayout.SOUTH);
+        }
+    }
     public static void main(String[] args) {
         setup();
-        launch();
-        Music test = new Music();
-        test.playSound();
+        appFrame.setLocationRelativeTo(null);
+        appFrame.setVisible(true);
 
-        JPanel myPanel = new JPanel();
+        new MainMenu();
 
-        bindKey(myPanel, "W");
-        bindKey(myPanel, "A");
-        bindKey(myPanel, "S");
-        bindKey(myPanel, "D");
-
-        bindKey(myPanel, "UP");
-        bindKey(myPanel, "DOWN");
-        bindKey(myPanel, "LEFT");
-        bindKey(myPanel, "RIGHT");
+        Music audio = new Music();
+        audio.playSound();
     }
     private static boolean endgame;
     private static BufferedImage background;
@@ -423,6 +460,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static double twoPi;
 
     private static JFrame appFrame;
+    private static JPanel menuBar;
+
+    private static float musicVolumeMultiplier;
 
     private static final int IFW = JComponent.WHEN_IN_FOCUSED_WINDOW;
 }
