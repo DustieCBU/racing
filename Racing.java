@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.Vector;
+import java.util.concurrent.Flow;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -30,10 +31,12 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         twoPi = 2.0 * 3.14159265358979;
         endgame = false;
         counted = false;
+        countdownDuration = 3000;
 
         appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         appFrame.setSize(WINWIDTH, WINHEIGHT);
 
+        // keybinding panel
         JPanel keyPanel = new JPanel();
 
         bindKey(keyPanel, "W");
@@ -46,6 +49,38 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         bindKey(keyPanel, "RIGHT");
 
         appFrame.add(keyPanel);
+
+        // initialize main panel for game
+        gamePanel = new JPanel();
+        gamePanel.setSize(WINWIDTH, WINHEIGHT);
+        gamePanel.setVisible(true);
+        appFrame.add(gamePanel);
+
+        // initialize countdown panel
+        countdownPanel = new JPanel();
+        countdownPanel.setVisible(false);
+        countdownPanel.setLayout(new FlowLayout());
+        // test center panel
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        // initialize stoplight icons
+//        JLabel red1 = new JLabel();
+//        JLabel red2 = new JLabel();
+//        JLabel red3 = new JLabel();
+//        JLabel green1 = new JLabel();
+//        JLabel green2 = new JLabel();
+//        JLabel green3 = new JLabel();
+//        red1.set
+
+        gamePanel.add(countdownPanel, gbc);
+
+        // initialize go panel
+
         // lap count
         // best time 2 dec
         // p1Speed 0 dec
@@ -61,7 +96,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         catch (IOException e) {
 
         }
-
     }
 
     private static class ImageObject{
@@ -134,16 +168,11 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             // initialize graphics
             Graphics g = appFrame.getGraphics();
 
-            // initialize panel for graphics
-            JPanel gamePanel = new JPanel();
-            gamePanel.setSize(WINWIDTH, WINHEIGHT);
-            gamePanel.setVisible(true);
-            appFrame.add(gamePanel);
-
             while (!endgame){
                 drawBackground(g);
             }
         }
+
         // draw the background
         private void drawBackground(Graphics g) {
             g.drawImage(background, 0, 0, null);
@@ -196,6 +225,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("Start Game");
+            // hide menubar
             menuBar.setVisible(false);
 
             // initialize variables for game state
@@ -219,12 +249,10 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static class Countdown implements Runnable {
         @Override
         public void run() {
-            // set countdown timer to 3000 milliseconds
-            long countdownDuration = 3000;
-
             // basic countdown
             try {
                 System.out.println("Get Ready!");
+                displayCountdown();
 
                 while (countdownDuration > 0) {
                     System.out.println(countdownDuration / 1000);
@@ -243,13 +271,17 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 e.printStackTrace();
             }
         }
+
+        private void displayCountdown() {
+            Graphics g = appFrame.getGraphics();
+        }
     }
 
-    private static class PlayerMover implements Runnable {
+    private static class Player1Mover implements Runnable {
 
         private double velocityStep;
         private double rotateStep;
-        public PlayerMover() {
+        public Player1Mover1() {
             velocityStep = 0.01;
             rotateStep = 0.01;
         }
@@ -408,7 +440,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
         @Override
         public void run() {
-
             // initialize menu bar JPanel
             System.out.println("main menu");
             menuBar = new JPanel();
@@ -469,8 +500,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame.setLocationRelativeTo(null);
         appFrame.setVisible(true);
 
-//        Music audio = new Music();
-//        audio.playSound();
+        Music audio = new Music();
+        audio.playSound();
     }
 
     private static final int menuButtonHeight = 50;
@@ -478,6 +509,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static boolean endgame;
     private static boolean counted;
+
+    private static long countdownDuration;
 
     private static BufferedImage background;
     private static BufferedImage green_light;
@@ -525,6 +558,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static JFrame appFrame;
     private static JPanel menuBar;
+    private static JPanel gamePanel;
+    private static JPanel countdownPanel;
 
     private static float musicVolumeMultiplier;
 
