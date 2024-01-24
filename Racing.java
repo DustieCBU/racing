@@ -29,6 +29,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         pi = 3.14159265358979;
         twoPi = 2.0 * 3.14159265358979;
         endgame = false;
+        counted = false;
 
         appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         appFrame.setSize(WINWIDTH, WINHEIGHT);
@@ -53,11 +54,14 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         // image processing
         try { // TODO: add images
-            background = ImageIO.read(new File ("/images/track.png"));
+            background = ImageIO.read(new File ("images/track.png"));
+            green_light = ImageIO.read(new File ("images/green_light.png"));
+            red_light = ImageIO.read(new File ("images/red_light.png"));
         }
         catch (IOException e) {
 
         }
+
     }
 
     private static class ImageObject{
@@ -127,6 +131,23 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static class Animate implements Runnable {
         public void run() {
+            // initialize graphics
+            Graphics g = appFrame.getGraphics();
+
+            // initialize panel for graphics
+            JPanel gamePanel = new JPanel();
+            gamePanel.setSize(WINWIDTH, WINHEIGHT);
+            gamePanel.setVisible(true);
+            appFrame.add(gamePanel);
+
+            while (!endgame){
+                drawBackground(g);
+            }
+        }
+        // draw the background
+        private void drawBackground(Graphics g) {
+            g.drawImage(background, 0, 0, null);
+            g.dispose();
         }
     }
 
@@ -187,9 +208,11 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
             // define threads
             Thread t1 = new Thread(new Countdown());
+            Thread t2 = new Thread(new Animate());
 
             // start threads
             t1.start();
+            t2.start();
         }
     }
 
@@ -214,12 +237,13 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 }
 
                 System.out.println("Go!");
+
+                counted = true;
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
     }
-
 
     private static class PlayerMover implements Runnable {
 
@@ -361,6 +385,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
+    // select car menu
     private static class SelectCar implements ActionListener{
         private SelectCar(){
 
@@ -452,8 +477,11 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static final Dimension menuButtonSize = new Dimension(200, menuButtonHeight);
 
     private static boolean endgame;
+    private static boolean counted;
 
     private static BufferedImage background;
+    private static BufferedImage green_light;
+    private static BufferedImage red_light;
     private static BufferedImage player1;
     private static BufferedImage player2;
 
