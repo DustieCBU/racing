@@ -51,14 +51,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         // p2Speed 0 dec
         // implement initial player locations
 
-        try { // image processing
+        // image processing
+        try { // TODO: add images
             background = ImageIO.read(new File ("/images/track.png"));
-            supra = ImageIO.read(new File("supra.png"));
-            porche = ImageIO.read(new File("porche.png"));
-            brz = ImageIO.read(new File("brz.png"));
-            avSupra = ImageIO.read(new File("avSupra.png"));
-            avPorche = ImageIO.read(new File("avPorche.png"));
-            avBrz = ImageIO.read(new File("avBrz.png"));
         }
         catch (IOException e) {
 
@@ -146,11 +141,13 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             playSound();
         }
 
+        // TODO: redo changing selected song
         private void playSound(){
             File song = endgame ?
                     new File("audio/music/endBGM.wav") : new File("audio/music/bgm.wav");
             AudioInputStream inputStream = null;
 
+            // basic play music with looping
             try {
                 Clip clip = AudioSystem.getClip();
                 inputStream = AudioSystem.getAudioInputStream(song);
@@ -177,7 +174,10 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
         @Override
         public void actionPerformed(ActionEvent e) {
+            System.out.println("Start Game");
             menuBar.setVisible(false);
+
+            // initialize variables for game state
             endgame = true;
             endgame =  false;
             wPressed = false;
@@ -185,10 +185,41 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             sPressed = false;
             dPressed = false;
 
-            Thread t1 = new Thread(new PlayerMover());
+            // define threads
+            Thread t1 = new Thread(new Countdown());
+
+            // start threads
             t1.start();
         }
     }
+
+    private static class Countdown implements Runnable {
+        @Override
+        public void run() {
+            // set countdown timer to 3000 milliseconds
+            long countdownDuration = 3000;
+
+            // basic countdown
+            try {
+                System.out.println("Get Ready!");
+
+                while (countdownDuration > 0) {
+                    System.out.println(countdownDuration / 1000);
+
+                    // Pause the execution for 1 second (1000 milliseconds)
+                    Thread.sleep(1000);
+
+                    // Subtract 1000 milliseconds (1 second) from the countdown duration
+                    countdownDuration -= 1000;
+                }
+
+                System.out.println("Go!");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
     private static class PlayerMover implements Runnable {
 
@@ -219,7 +250,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
         @Override
         public void actionPerformed(ActionEvent e) {
+            // listen for specific key and change pressed variable
             if(action.equals("W")){
+                System.out.println("W");
                 wPressed = true;
             }
             if(action.equals("A")){
@@ -232,6 +265,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 dPressed = true;
             }
             if(action.equals("UP")){
+                System.out.println("UP");
                 upPressed = true;
             }
             if(action.equals("DOWN")){
@@ -284,6 +318,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
     }
 
+    // TODO: redo confirm quit window
     private static class ConfirmQuit implements ActionListener {
         public void popup(){
             int quit = JOptionPane.showConfirmDialog(null, "Are you sure you want to quit?",
@@ -301,6 +336,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
     // Option window to change the volume of the game
+    // TODO: change options window from JFrame to JPanel
+    // TODO: implement volume adjustment
     private static class Options implements ActionListener {
         private void popup(){
             System.out.println("Open options");
@@ -346,19 +383,27 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
         @Override
         public void run() {
+
+            // initialize menu bar JPanel
             System.out.println("main menu");
             menuBar = new JPanel();
-            menuBar.setBackground(Color.DARK_GRAY);
-            menuBar.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
+            menuBar.setBackground(new Color(0, 0, 0, 0));
+            menuBar.setLayout(new FlowLayout(FlowLayout.CENTER));
 
-            JButton startGameButton = createButton("Start Game", new StartGame());
-            JButton carSelectButton = createButton("Select Car", null);
-            JButton optionsButton = createButton("Options", new Options());
-            JButton exitButton = createButton("Quit Game", new ConfirmQuit());
+            // define buttons
+            JButton startGameButton = createButton("Start Game", new StartGame(), menuButtonSize);
+            JButton carSelectButton = createButton("Select Car", null, menuButtonSize);
+            JButton optionsButton = createButton("Options", new Options(), menuButtonSize);
+            JButton exitButton = createButton("Quit Game", new ConfirmQuit(), menuButtonSize);
 
+            // add buttons to menu bar
+            menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
             menuBar.add(startGameButton);
+            menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
             menuBar.add(carSelectButton);
+            menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
             menuBar.add(optionsButton);
+            menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
             menuBar.add(exitButton);
 
             menuBar.setVisible(true);
@@ -367,8 +412,14 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
     // basic function to create custom button
-    private static JButton createButton(String title, ActionListener actionListener) {
+    private static JButton createButton(String title, ActionListener actionListener, Dimension dim) {
         JButton button = new JButton(title);
+
+//        button.setBackground(new Color(235, 235, 235));
+//        button.setContentAreaFilled(false); // transparent background
+//        button.setBackground(null);        button.setMaximumSize(dim);
+        button.setBorder(null);
+        button.setFont(new Font("Proxy 1", Font.PLAIN, 12));
 
         if (actionListener != null) {
             button.addActionListener(actionListener);
@@ -393,18 +444,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame.setLocationRelativeTo(null);
         appFrame.setVisible(true);
 
-        Music audio = new Music();
-        audio.playSound();
+//        Music audio = new Music();
+//        audio.playSound();
     }
 
+    private static final int menuButtonHeight = 50;
+    private static final Dimension menuButtonSize = new Dimension(200, menuButtonHeight);
+
     private static boolean endgame;
+
     private static BufferedImage background;
-    private static BufferedImage supra;
-    private static BufferedImage porche;
-    private static BufferedImage brz;
-    private static BufferedImage avSupra;
-    private static BufferedImage avPorche;
-    private static BufferedImage avBrz;
     private static BufferedImage player1;
     private static BufferedImage player2;
 
@@ -421,6 +470,12 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static ImageObject p2;
     private static double p1width;
     private static double p1height;
+
+    private static double p1X;
+    private static double p1Y;
+    private static double cameraX;
+    private static double cameraY;
+
     private static double p1originalX;
     private static double p1originalY;
     private static double p1velocity;
