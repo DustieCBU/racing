@@ -30,17 +30,25 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     public static void setup() {
         XOFFSET = 0;
-        YOFFSET = 0;
+        YOFFSET = -20; // so the background doesn't go out of frame at the bottom
         WINWIDTH = 1280;
         WINHEIGHT = 720;
+        p1originalX = 590;
+        p1originalY = 225;
         pi = 3.14159265358979;
         twoPi = 2.0 * 3.14159265358979;
         endGame = false;
         countdownDuration = 3000;
+        counted = false;
         p1Lap = 0;
         p2Lap = 0;
         lightScale = 0.1;
+        lightX = 584;
+        lightY = 20;
+        carScale = 0.5;
         musicVolumeMultiplier = 0.2f;
+        p1X = p1originalX;
+        p1Y = p1originalY;
 
         // lap count
         // best time 2 dec
@@ -49,10 +57,26 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         // implement initial player locations
 
         // image processing
-        try { // TODO: add images
-            background = ImageIO.read(new File ("images/track.png"));
+        try {
+            // track background
+            background = ImageIO.read(new File ("images/bg.png"));
+            street = ImageIO.read(new File ("images/street.png"));
+            border = ImageIO.read(new File ("images/border.png"));
+
+            // countdown lights
             green_light = ImageIO.read(new File ("images/green_light.png"));
+            yellow_light = ImageIO.read(new File ("images/yellow_light.png"));
             red_light = ImageIO.read(new File ("images/red_light.png"));
+
+            // cars
+            carGreen = ImageIO.read(new File ("images/carGreen.png"));
+            carBlue = ImageIO.read(new File ("images/carBlue.png"));
+            carRed = ImageIO.read(new File ("images/carRed.png"));
+            carOrange = ImageIO.read(new File ("images/carOrange.png"));
+            carPink = ImageIO.read(new File ("images/carPink.png"));
+            carYellow = ImageIO.read(new File ("images/carYellow.png"));
+            carCyan = ImageIO.read(new File ("images/carCyan.png"));
+
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -60,13 +84,17 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         // scale down countdown images
         green_light = scaleImage(green_light, lightScale);
+        yellow_light = scaleImage(yellow_light, lightScale);
         red_light = scaleImage(red_light, lightScale);
+
+        carGreen = scaleImage(carGreen, carScale);
     }
 
     private static void displayMenu() {
         appFrame = new JFrame("Racing");
         appFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         appFrame.setSize(WINWIDTH, WINHEIGHT);
+        appFrame.setResizable(false);
 
         // keybinding panel
         JPanel keyPanel = new JPanel();
@@ -81,14 +109,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         bindKey(keyPanel, "RIGHT");
         appFrame.add(keyPanel);
 
-        JPanel gamePanel = new GamePanel();
-        gamePanel.setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-
         gbc.ipady = 15;
         gbc.ipadx = 50;
+
+        // game panel
+        JPanel gamePanel = new GamePanel();
+        gamePanel.setLayout(new GridBagLayout());
 
         // initialize menu bar JPanel
         System.out.println("main menu");
@@ -117,8 +147,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame.getContentPane().add(gamePanel);
         appFrame.setVisible(true);
 
-        Music audio = new Music();
-        audio.play();
+//        Music audio = new Music();
+//        audio.play();
     }
 
 //    |---------------------- MAIN MENU ----------------------|
@@ -200,7 +230,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
 //    |---------------------- GAMEPLAY ------------------------|
-    private static class StartGame implements ActionListener{
+    private static class StartGame implements ActionListener {
+
         private final GamePanel gamePanel;
         public StartGame(GamePanel panel){
             this.gamePanel = panel;
@@ -210,16 +241,15 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         public void actionPerformed(ActionEvent e) {
             System.out.println("Start Game");
             // initialize variables for game state
-            endGame = true;
-
             wPressed = false;
             aPressed = false;
             sPressed = false;
             dPressed = false;
-
             endGame =  false;
 
+            menuBar.setVisible(false);
             gamePanel.setPlaying(true);
+            gamePanel.startTimer();
 
             // define threads
             Thread t1 = new Thread(new Countdown());
@@ -233,7 +263,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static class Countdown implements Runnable {
         @Override
         public void run() {
-            menuBar.setVisible(false);
+
             System.out.println("Hide menubar");
             // basic countdown
             try {
@@ -245,7 +275,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     countdownDuration -= 1000;
                 }
                 System.out.println("Go!");
-
+                counted = true;
 
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -269,13 +299,35 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             playing = false;
         }
 
+        public void startTimer(){
+           timer.start();
+        }
+
+        public void stopTimer(){
+            timer.stop();
+        }
+
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
+            Graphics g2D = (Graphics2D) g;
             if (playing) {
-                System.out.println("drawing");
-                Graphics g2D = (Graphics2D) g;
-
                 g2D.drawImage(background, XOFFSET, YOFFSET, null);
+                g2D.drawImage(street, XOFFSET, YOFFSET, null);
+                g2D.drawImage(border, XOFFSET, YOFFSET, null);
+
+                g2D.drawImage(carGreen, (int) p1X, (int) p1Y, null);
+
+                if (!counted){
+                    if (countdownDuration > 2000){
+                        g2D.drawImage(red_light, lightX, lightY, null);
+                    }
+                    else if (countdownDuration > 1000){
+                        g2D.drawImage(yellow_light, lightX, lightY, null);
+                    }
+                    else{
+                        g2D.drawImage(green_light, lightX, lightY, null);
+                    }
+                }
 
                 g2D.dispose();
             }
@@ -295,18 +347,21 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             rotateStep = 0.01;
         }
         public void run() {
-            while (!endGame) {
+            while (!endGame && counted) {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException e) {
                 }
+                if (wPressed) p1velocity += velocityStep;
+                if (sPressed) p1velocity -= velocityStep;
+
             }
         }
     }
 
 //      |---------------------- MISC CLASSES ----------------------|
 
-    private static class ImageObject{
+    private static class ImageObject {
         private double x;
         private double y;
         private double xwidth;
@@ -540,10 +595,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static boolean endGame;
 
     private static long countdownDuration;
+    private static boolean counted;
 
-    private static BufferedImage background, green_light, red_light, player1, player2;
+    private static BufferedImage background, green_light, yellow_light, red_light, street, border;
+    private static BufferedImage carRed, carBlue, carGreen, carCyan, carOrange, carPink, carYellow;
+
+    private static int lightX;
+    private static int lightY;
 
     private static double lightScale;
+    private static double carScale;
 
     private static boolean upPressed, downPressed, leftPressed, rightPressed;
     private static boolean wPressed, aPressed, sPressed, dPressed;
@@ -558,8 +619,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static double p1X;
     private static double p1Y;
-    private static double cameraX;
-    private static double cameraY;
 
     private static double p1originalX;
     private static double p1originalY;
@@ -569,8 +628,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static double p2originalX;
     private static double p2originalY;
     private static double p2velocity;
-
-    private static int level;
 
     private static int XOFFSET;
     private static int YOFFSET;
@@ -583,6 +640,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static JFrame appFrame;
     private static JPanel menuBar;
     private static JPanel countdownPanel;
+
+    //TODO: Implement speed display
 
     private static float musicVolumeMultiplier;
 
