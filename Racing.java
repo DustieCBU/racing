@@ -15,6 +15,8 @@ import java.util.Vector;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class Racing { // incorporating audio, starting traffic light, start menu with car selection
     public Racing() {
@@ -47,16 +49,11 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         lightScale = 0.1;
         lightX = 550;
         lightY = 20;
-        carScale = 0.5;
         musicVolumeMultiplier = 0.2f;
         maxSpeed = 4.5;
         playing = false;
-
-        // lap count
-        // best time 2 dec
-        // p1Speed 0 dec
-        // p2Speed 0 dec
-        // implement initial player locations
+        menuButtonHeight = 50;
+        buttonColor = new Color(0, 230, 64);
 
         // image processing
         try {
@@ -88,7 +85,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         yellow_light = scaleImage(yellow_light, lightScale);
         red_light = scaleImage(red_light, lightScale);
 
-//        carGreen = scaleImage(carGreen, carScale);
         p1Image = carGreen; // TODO: temporary needs to be replaced in selectcar
         p2Image = carBlue;
         carWidth = 45.0;
@@ -114,45 +110,46 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         bindKey(keyPanel, "RIGHT");
         appFrame.add(keyPanel);
 
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.CENTER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.ipady = 15;
-        gbc.ipadx = 50;
+        gbc.ipady = menuButtonHeight;
+        gbc.ipadx = 100;
+        gbc.insets = new Insets(0, 10, 50, 10);
 
         // game panel
         JPanel gamePanel = new GamePanel();
         gamePanel.setLayout(new GridBagLayout());
 
+        // options panel
+        JPanel optionsPanel = new SliderPanel();
+        optionsPanel.setVisible(false);
+
         // initialize menu bar JPanel
         menuBar = new JPanel();
-        menuBar.setLayout(new FlowLayout(FlowLayout.CENTER));
+        menuBar.setLayout(new GridBagLayout());
 
         // define buttons
-        JButton startGameButton = createButton("Start Game", new StartGame((GamePanel) gamePanel), menuButtonSize);
-        JButton carSelectButton = createButton("Select Car", null, menuButtonSize);
-        JButton optionsButton = createButton("Options", new Options(), menuButtonSize);
-        JButton exitButton = createButton("Quit Game", new ConfirmQuit(), menuButtonSize);
+        JButton startGameButton = createButton("Start Game", new StartGame((GamePanel) gamePanel));
+        JButton carSelectButton = createButton("Select Car", null);
+        JButton optionsButton = createButton("Music Volume", new Options(optionsPanel));
+        JButton exitButton = createButton("Quit Game", new ConfirmQuit());
 
         // add buttons to menu bar
-        menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
-        menuBar.add(startGameButton);
-        menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
-        menuBar.add(carSelectButton);
-        menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
-        menuBar.add(optionsButton);
-        menuBar.add(Box.createVerticalStrut(menuButtonHeight * 2));
-        menuBar.add(exitButton);
+        menuBar.add(startGameButton, gbc);
+        menuBar.add(carSelectButton, gbc);
+        menuBar.add(optionsButton, gbc);
+        menuBar.add(exitButton, gbc);
 
         menuBar.setVisible(true);
         appFrame.add(menuBar, BorderLayout.SOUTH);
         appFrame.setLocationRelativeTo(null);
         appFrame.getContentPane().add(gamePanel);
+        appFrame.getContentPane().add(optionsPanel);
         appFrame.setVisible(true);
 
-//        Music audio = new Music();
-//        audio.play();
+        Music audio = new Music();
+        audio.play();
     }
 
 //    |---------------------- MAIN MENU ----------------------|
@@ -163,7 +160,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             Font customFont = new Font("Proxy 1", Font.PLAIN, 12);
 
             // Create a custom JButton with the custom font
-            JButton customButton = new JButton("OK");
+            JButton customButton = new JButton("Confirm");
             customButton.setFont(customFont);
 
             // Create a custom ActionListener for the button
@@ -176,12 +173,13 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             };
 
             // Create a custom JOptionPane with the custom font and button
-            JOptionPane optionPane = new JOptionPane("Custom JOptionPane with Custom Font", JOptionPane.INFORMATION_MESSAGE, JOptionPane.DEFAULT_OPTION, null, new Object[]{customButton});
+            JOptionPane optionPane = new JOptionPane("Would you like to quit?", JOptionPane.INFORMATION_MESSAGE,
+                    JOptionPane.DEFAULT_OPTION, null, new Object[]{customButton});
             optionPane.setFont(customFont);
             customButton.addActionListener(customActionListener);
 
             // Create a custom JDialog to contain the JOptionPane
-            JDialog dialog = optionPane.createDialog("Custom Dialog");
+            JDialog dialog = optionPane.createDialog("Confirm Quit?");
             dialog.setVisible(true);
         }
 
@@ -192,6 +190,12 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
     private static class Options implements ActionListener {
+        private JPanel panel;
+
+        public Options(JPanel panel) {
+            this.panel = panel;
+        }
+
         // Option window to change the volume of the game
         // TODO: change options window from JFrame to JPanel
         // TODO: implement volume adjustment
@@ -211,7 +215,43 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             optionsFrame.setVisible(true);
         }
         public void actionPerformed(ActionEvent e) {
-            popup();
+            panel.setVisible(true);
+        }
+    }
+
+    public static class SliderPanel extends JPanel {
+        private JSlider slider;
+        private double sliderValue = 0.5; // Initial value
+        private JButton backButton;
+
+        public SliderPanel() {
+            slider = new JSlider(0, 100, 50); // Minimum, maximum, initial value
+            slider.setMajorTickSpacing(20);
+            slider.setMinorTickSpacing(5);
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+            slider.setFont(new Font("Proxy 1", Font.PLAIN, 16));
+
+            // Update sliderValue when slider changes
+            slider.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    sliderValue = slider.getValue() / 100.0;
+                }
+            });
+
+            backButton = createButton("Confirm", e -> {
+                this.setVisible(false);
+                musicVolumeMultiplier = (float) getSliderValue();
+                adjustVolume(musicVolumeMultiplier);
+            });
+
+            add(slider, gbc);
+            add(backButton, gbc);
+        }
+
+        public double getSliderValue() {
+            return sliderValue;
         }
     }
 
@@ -278,7 +318,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     public static class GamePanel extends JPanel {
         private Timer timer;
-//        private boolean playing;
 
         public GamePanel() {
             timer = new Timer(32, new ActionListener() {
@@ -290,22 +329,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             });
         }
 
-        public void startTimer(){
-           timer.start();
-        }
-
-        public void stopTimer(){
-            timer.stop();
-        }
-
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             Graphics2D g2D = (Graphics2D) g;
             if (playing) {
+                // draw background
                 g2D.drawImage(background, XOFFSET, YOFFSET, null);
                 g2D.drawImage(street, XOFFSET, YOFFSET, null);
                 g2D.drawImage(border, XOFFSET, YOFFSET, null);
 
+                // draw players
                 g2D.drawImage(rotateImageObject(p1).filter(p1Image, null), (int) p1.getX(),
                         (int) p1.getY(), null);
                 g2D.drawImage(rotateImageObject(p2).filter(p2Image, null), (int) p2.getX(),
@@ -320,13 +353,18 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     g2D.drawImage(green_light, lightX, lightY, null);
                     counted = true;
                 }
+
+                // draw text
+
+
                 g2D.dispose();
             }
         }
 
-//        public void setPlaying(boolean in) {
-//            playing = in;
-//        }
+        public void startTimer(){
+            timer.start();
+        }
+
     }
 
     private static class PlayerMover implements Runnable {
@@ -431,14 +469,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             return y;
         }
 
-        public double getXwidth() {
-            return xwidth;
-        }
-
-        public double getHeight() {
-            return yheight;
-        }
-
         public double getAngle() {
             return angle;
         }
@@ -527,15 +557,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 clip.open(inputStream);
                 clip.loop(Clip.LOOP_CONTINUOUSLY);
 
-                // Get the volume control from the clip
-                FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
-
-                // Adjust the volume by providing a multiplier
-                float currentGain = gainControl.getValue();
-                float targetGain = currentGain + (20.0f * (float) Math.log10(musicVolumeMultiplier));
-                gainControl.setValue(targetGain);
+                adjustVolume(musicVolumeMultiplier , clip);
                 clip.start();
-                System.out.println("Playing song");
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -544,14 +567,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
 //     |---------------------- MISC FUNCTIONS -------------------|
 
-    private static JButton createButton(String title, ActionListener actionListener, Dimension dim) {
+    private static JButton createButton(String title, ActionListener actionListener) {
         JButton button = new JButton(title);
-
+        button.setFont(new Font("Proxy 1", Font.PLAIN, 16));
+        button.setBorder(null);
 //        button.setBackground(new Color(235, 235, 235));
 //        button.setContentAreaFilled(false); // transparent background
-//        button.setBackground(null);        button.setMaximumSize(dim);
-        button.setBorder(null);
-        button.setFont(new Font("Proxy 1", Font.PLAIN, 12));
+//        button.setBackground(null);
+//        button.setMaximumSize(dim);
+//        button.setPreferredSize(dim);
+        button.setBackground(buttonColor);
 
         if (actionListener != null) {
             button.addActionListener(actionListener);
@@ -579,6 +604,13 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         return atop;
     }
 
+    private static void adjustVolume(float volumeMultiplier, Clip clip) {
+        FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+        float currentGain = gainControl.getValue();
+        float targetGain = currentGain + (20.0f * (float) Math.log10(volumeMultiplier));
+        gainControl.setValue(targetGain);
+    }
+
 //     |-------------- KEY BINDING AND DETECTION --------------|
 
     private static class KeyPressed extends AbstractAction {
@@ -594,7 +626,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         public void actionPerformed(ActionEvent e) {
             // listen for specific key and change pressed variable
             if(action.equals("W")){
-                System.out.println("W");
                 wPressed = true;
             }
             if(action.equals("A")){
@@ -607,7 +638,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 dPressed = true;
             }
             if(action.equals("UP")){
-                System.out.println("UP");
                 upPressed = true;
             }
             if(action.equals("DOWN")){
@@ -671,8 +701,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 //     |---------------------- VARIABLES -----------------------|
     private static boolean playing;
 
-    private static final int menuButtonHeight = 50;
-    private static final Dimension menuButtonSize = new Dimension(200, menuButtonHeight);
+    private static int menuButtonHeight;
+    private static Color buttonColor;
+    private static GridBagConstraints gbc;
 
     private static boolean endGame, counted;
 
@@ -686,7 +717,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static double maxSpeed;
 
-    private static double lightScale, carScale;
+    private static double lightScale;
 
     private static boolean upPressed, downPressed, leftPressed, rightPressed;
     private static boolean wPressed, aPressed, sPressed, dPressed;
@@ -697,15 +728,15 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static int p1Lap, p2Lap;
 
     private static double carWidth, carHeight;
-    private static double p1originalX, p1originalY, p1velocity;
-    private static double p2originalX, p2originalY, p2velocity;
+    private static double p1originalX, p1originalY;
+    private static double p2originalX, p2originalY;
 
     private static int XOFFSET, YOFFSET, WINWIDTH, WINHEIGHT;
     private static double pi, twoPi;
 
 
     private static JFrame appFrame;
-    private static JPanel menuBar, countdownPanel;
+    private static JPanel menuBar;
 
     //TODO: Implement speed display
 
