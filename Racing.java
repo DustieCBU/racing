@@ -57,6 +57,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         buttonColor = new Color(0, 230, 64);
         songPath = "audio/music/bgm.wav";
         buttonFont = new Font("Proxy 1", Font.BOLD, 16);
+        textFont = new Font("Proxy 1", Font.BOLD, 24);
 
         // image processing
         try {
@@ -349,6 +350,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                         (int) p1.getY(), null);
                 g2D.drawImage(rotateImageObject(p2).filter(p2Image, null), (int) p2.getX(),
                         (int) p2.getY(), null);
+                System.out.println(p1.getVelocity());
 
                 // draw stoplights
                 if (countdownDuration > 2000) {
@@ -360,7 +362,14 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     counted = true;
                 }
 
-                // draw text
+                // draw player speeds
+                g2D.setFont(textFont);
+
+                g2D.drawString("Player 1 Speed", 5, 25);
+                g2D.drawString(String.format("%.0f", Math.abs(p1.getVelocity() * 10.0)), 5, 55);
+
+                g2D.drawString("Player 2 Speed", 5, 125);
+                g2D.drawString(String.format("%.0f", Math.abs(p2.getVelocity() * 10.0)), 5, 155);
 
                 g2D.dispose();
             }
@@ -400,7 +409,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     if (useWASD) {
 
                         if (wPressed && checkMaxSpeed()) player.changeVelocity(accelStep);
-                        if (sPressed) player.changeVelocity(-brakeStep);
+                        if (sPressed && checkMaxSpeed()) player.changeVelocity(-brakeStep);
                         if (aPressed && checkStillRotate()) {
                             if (player.getVelocity() >= 0) player.rotate(rotateStep);
                             else player.rotate(-rotateStep);
@@ -412,7 +421,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     }
                     else {
                         if (upPressed && checkMaxSpeed()) player.changeVelocity(accelStep);
-                        if (downPressed) player.changeVelocity(-brakeStep);
+                        if (downPressed && checkMaxSpeed()) player.changeVelocity(-brakeStep);
                         if (leftPressed && checkStillRotate()) {
                             if (player.getVelocity() >= 0) player.rotate(rotateStep);
                             else player.rotate(-rotateStep);
@@ -433,7 +442,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         }
 
         private boolean checkMaxSpeed() {
-            return player.getVelocity() < maxSpeed;
+            return Math.abs(player.getVelocity()) < maxSpeed;
         }
     }
 
@@ -502,7 +511,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
         public void setVelocity(double in) { velocity = in; }
 
-        public double getVelocity() { return velocity; }
+        public double getVelocity() {
+            return velocity;
+        }
 
         public void setInternalAngle(double internalangle) {
             this.internalangle = internalangle;
@@ -747,7 +758,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static JButton startGameButton, carSelectButton, optionsButton, exitButton;
 
-    private static Font buttonFont;
+    private static Font buttonFont, textFont;
 
     // TODO: Implement speed display
 
