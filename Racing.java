@@ -44,8 +44,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         endGame = false;
         countdownDuration = 3000;
         counted = false;
-        p1Lap = 0;
-        p2Lap = 0;
         maxLap = 3;
         lightScale = 0.1;
         lightX = 550;
@@ -134,10 +132,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 new Options(optionsPanel), "マクスーラップを変更");
         exitButton = new SubtextButton("Quit Game", new ConfirmQuit(), "ゲームを閉じる");
 
-        // initialize menu bar JPanel
-//        menuBar = new JPanel();
-//        menuBar.setLayout(new GridBagLayout());
-
         // add buttons to menu bar
         gamePanel.add(startGameButton, gbc);
         gamePanel.add(carSelectButton, gbc);
@@ -151,7 +145,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         appFrame.getContentPane().add(gamePanel);
         appFrame.setVisible(true);
 
-        playAudio(songPath);
+//        playAudio(songPath);
     }
 
 //    |---------------------- MAIN MENU ----------------------|
@@ -199,10 +193,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             this.panel = panel;
         }
 
-        // Option window to change the volume of the game
-        // TODO: change options window from JFrame to JPanel
-        // TODO: implement volume adjustment
-
         public void actionPerformed(ActionEvent e) {
             panel.setVisible(true);
 
@@ -225,7 +215,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             slider.setPaintTicks(true);
             slider.setPaintLabels(true);
             slider.setFont(buttonFont);
-//            slider.setLayout(borderLayout);
 
             // Update sliderValue when slider changes
             slider.addChangeListener(new ChangeListener() {
@@ -298,7 +287,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             Thread t1 = new Thread(new Countdown());
             Thread t2 = new Thread(new PlayerMover(p1, true));
             Thread t3 = new Thread(new PlayerMover(p2, false));
-            Thread t4 = new Thread(new Game());
+            Thread t4 = new Thread(new Game(p1, p2));
 
             // start threads
             t1.start();
@@ -326,6 +315,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     public static class GamePanel extends JPanel {
         private Timer timer;
 
+
         public GamePanel() {
             timer = new Timer(32, new ActionListener() {
                 public void actionPerformed(ActionEvent evt) {
@@ -350,7 +340,9 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                         (int) p1.getY(), null);
                 g2D.drawImage(rotateImageObject(p2).filter(p2Image, null), (int) p2.getX(),
                         (int) p2.getY(), null);
-                System.out.println(p1.getVelocity());
+
+//                System.out.println(p1.getVelocity());
+//                System.out.println("X: " + p1.getX() + " Y: " + p1.getY());
 
                 // draw stoplights
                 if (countdownDuration > 2000) {
@@ -370,6 +362,16 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
                 g2D.drawString("Player 2 Speed", 5, 125);
                 g2D.drawString(String.format("%.0f", Math.abs(p2.getVelocity() * 10.0)), 5, 155);
+
+                // coordiates for checkpoints
+                g2D.drawLine(1130, 260, 1240, 260);
+                g2D.drawLine(1000, 500, 1000, 720);
+                g2D.drawLine(288, 500, 288, 660);
+                g2D.drawLine(180, 200, 380, 200);
+
+                // coords for finish line
+                g2D.drawLine(700, 200, 700, 320);
+
 
                 g2D.dispose();
             }
@@ -433,6 +435,8 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     }
                     player.move(-player.getVelocity() * Math.cos(player.getAngle() - pi / 2.0),
                             player.getVelocity() * Math.sin(player.getAngle() - pi / 2.0));
+//                    player.updateBounds(-player.getVelocity() * Math.cos(player.getAngle() - pi / 2.0,
+//                            player.getVelocity() * Math.sin(player.getAngle() - pi / 2.0));
                 }
             }
         }
@@ -447,40 +451,55 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     }
 
     private static class Game implements Runnable {
+        private ImageObject player1, player2;
+
+        public Game(ImageObject p1, ImageObject p2){
+            this.player1 = p1;
+            this.player2 = p2;
+        }
+
         @Override
         public void run() {
-            while (playing){
+//            while (playing){
+//                checkLap(p1);
+//                checkLap(p2);
+////                checkRoad(p1);
+////                checkRoad(p2);
+//            }
+        }
 
-            }
+        private void checkLap(ImageObject player){
+//            if (player.getX() >= 1130 && player.getX() < )
         }
     }
 
 //     |---------------------- MISC CLASSES ----------------------|
 
     private static class ImageObject {
-        private double x;
-        private double y;
-        private double xwidth;
-        private double yheight;
-        private double angle; // radians
-        private double internalangle; // radians
+        private double x, y, xwidth, yheight, angle, internalangle, velocity, boundsX, boundsY;
         private Vector<Double> coords;
-        private double velocity;
+        private int lapCount, cpCount;
 
-        public ImageObject(){
 
+        public double getWidth() {
+            return xwidth;
+        }
+
+        public double getHeight() {
+            return yheight;
         }
 
         public ImageObject(double xinput, double yinput, double xwidthinput,
-                           double yheightinput, double angleinput){
+                           double yheightinput, double angleinput) {
             x = xinput;
             y = yinput;
             xwidth = xwidthinput;
             yheight = yheightinput;
             angle = angleinput;
             internalangle = 0.0;
-            coords = new Vector<Double>();
             velocity = 0.0;
+            lapCount = 0;
+            cpCount = 0;
         }
 
         public double getX() {
@@ -515,6 +534,25 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             return velocity;
         }
 
+        public void setLapCount(int in) { this.lapCount = in; }
+
+        public int getLapCount() {
+            return lapCount;
+        }
+
+        public void setLap(int in){
+            this.lapCount = in;
+            System.out.println("Added lap");
+        }
+
+        public int getCpCount() {
+            return cpCount;
+        }
+
+        public void setCpCount(int cpCount) {
+            this.cpCount = cpCount;
+        }
+
         public void setInternalAngle(double internalangle) {
             this.internalangle = internalangle;
         }
@@ -526,11 +564,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         public void move(double xinput, double yinput){
             x = x + xinput;
             y = y + yinput;
-        }
-
-        public void moveTo(double xinput, double yinput){
-            x = xinput;
-            y = yinput;
         }
 
         public void rotate(double angleinput){
@@ -633,6 +666,43 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         float currentGain = gainControl.getValue();
         float targetGain = currentGain + (20.0f * (float) Math.log10(volumeMultiplier));
         gainControl.setValue(targetGain);
+    }
+
+    private static Boolean isInside(double p1x, double p1y, double p2x1, double p2y1,
+                                    double p2x2, double p2y2) {
+        Boolean ret = false;
+        if (p1x > p2x1 && p1x < p2x2) {
+            if (p1y > p2y1 && p1y < p2y2) ret = true;
+            if (p1y > p2y2 && p1y < p2y1) ret = true;
+        }
+        if (p1x > p2x2 && p1x < p2x1){
+            if (p1y > p2y1 && p1y < p2y2) ret = true;
+            if (p1y > p2y2 && p1y < p2y1) ret = true;
+        }
+        return ret;
+    }
+
+    private static Boolean collisionOccursCoordinates(double p1x1, double p1y1, double p1x2, double p1y2, double p2x1,
+                                                      double p2y1, double p2x2, double p2y2){
+        Boolean ret = false;
+
+        if (isInside(p1x1, p1y1, p2x1, p2y1, p2x2, p2y2)) ret = true;
+        if (isInside(p1x1, p1y2, p2x1, p2y1, p2x2, p2y2)) ret = true;
+        if (isInside(p1x2, p1y1, p2x1, p2y1, p2x2, p2y2)) ret = true;
+        if (isInside(p1x2, p1y2, p2x1, p2y1, p2x2, p2y2)) ret = true;
+        if (isInside(p2x1, p2y1, p1x1, p1y1, p1x2, p1y2)) ret = true;
+        if (isInside(p2x1, p2y2, p1x1, p1y1, p1x2, p1y2)) ret = true;
+        if (isInside(p2x2, p2y1, p1x1, p1y1, p1x2, p1y2)) ret = true;
+        if (isInside(p2x2, p2y2, p1x1, p1y1, p1x2, p1y2)) ret = true;
+        return ret;
+    }
+
+    private static Boolean collisionOccurs(ImageObject obj1, ImageObject obj2) {
+        Boolean ret = false;
+        if (collisionOccursCoordinates(obj1.getX(), obj1.getY(), obj1.getX() + obj1.getWidth(),
+                obj1.getY() + obj1.getHeight(), obj2.getX(), obj2.getY(), obj2.getX() + obj2.getWidth(),
+                obj2.getY() + obj2.getHeight())) ret = true;
+        return ret;
     }
 
 //     |-------------- KEY BINDING AND DETECTION --------------|
@@ -746,8 +816,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
 
     private static ImageObject p1, p2;
     private static BufferedImage p1Image, p2Image;
-
-    private static int p1Lap, p2Lap;
 
     private static double carWidth, carHeight;
     private static double p1originalX, p1originalY;
