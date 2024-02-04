@@ -293,7 +293,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             t1.start();
             t2.start();
             t3.start();
-            t4.start();
+//            t4.start();
         }
     }
 
@@ -342,7 +342,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                         (int) p2.getY(), null);
 
 //                System.out.println(p1.getVelocity());
-//                System.out.println("X: " + p1.getX() + " Y: " + p1.getY());
+                System.out.println("X: " + p1.getX() + " Y: " + p1.getY());
 
                 // draw stoplights
                 if (countdownDuration > 2000) {
@@ -373,6 +373,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 g2D.drawLine(700, 200, 700, 320);
 
 
+
                 g2D.dispose();
             }
         }
@@ -387,6 +388,7 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         private double accelStep, rotateStep, brakeStep, friction;
         private ImageObject player;
         private boolean useWASD;
+        private double left, top, right, bottom;
 
         public PlayerMover(ImageObject in, boolean useWASD) {
             accelStep = 0.03;
@@ -395,6 +397,10 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             friction = 0.009;
             this.player = in;
             this.useWASD = useWASD;
+            right = 1230;
+            left = 0;
+            top = -4.0;
+            bottom = 630;
         }
 
         public void run() {
@@ -405,9 +411,14 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                 }
 
                 // after the initial countdown completes
-                if (counted) { // TODO: change back to counted
+                if (counted) { // only start after counter
+                    // keep in borders of frame
+                    forceBounds();
+                    // friction force
                     if (player.getVelocity() > 0) player.changeVelocity(-friction);
                     else player.changeVelocity(friction);
+
+                    // for if using wasd or arrows
                     if (useWASD) {
 
                         if (wPressed && checkMaxSpeed()) player.changeVelocity(accelStep);
@@ -435,14 +446,32 @@ public class Racing { // incorporating audio, starting traffic light, start menu
                     }
                     player.move(-player.getVelocity() * Math.cos(player.getAngle() - pi / 2.0),
                             player.getVelocity() * Math.sin(player.getAngle() - pi / 2.0));
-//                    player.updateBounds(-player.getVelocity() * Math.cos(player.getAngle() - pi / 2.0,
-//                            player.getVelocity() * Math.sin(player.getAngle() - pi / 2.0));
+
                 }
             }
         }
 
         private boolean checkStillRotate(){
             return (player.getVelocity() > 0.05 || player.getVelocity() < -0.05);
+        }
+
+        private void forceBounds() {
+            if (player.getX() < left) {
+                player.setX(left);
+                player.setVelocity(1.0);
+            }
+            if (player.getX() > right) {
+                player.setX(right);
+                player.setVelocity(1.0);
+            }
+            if (player.getY() > bottom) {
+                player.setY(bottom);
+                player.setVelocity(1.0);
+            }
+            if (player.getY() < top) {
+                player.setY(top);
+                player.setVelocity(1.0);
+            }
         }
 
         private boolean checkMaxSpeed() {
@@ -453,23 +482,33 @@ public class Racing { // incorporating audio, starting traffic light, start menu
     private static class Game implements Runnable {
         private ImageObject player1, player2;
 
+
         public Game(ImageObject p1, ImageObject p2){
             this.player1 = p1;
             this.player2 = p2;
+
         }
 
         @Override
         public void run() {
-//            while (playing){
-//                checkLap(p1);
-//                checkLap(p2);
-////                checkRoad(p1);
-////                checkRoad(p2);
-//            }
+            while (playing){
+                System.out.println("playing");
+                checkLap(player1);
+                System.out.println("Player 1 lap count: " + player1.getLapCount());
+
+                if (player1.getLapCount() > maxLap || player2.getLapCount() > maxLap) {
+                    playing = false;
+                    System.out.println(player1.getLapCount() > maxLap ? "Player 1 Wins" : "Player 2 Wins");
+                }
+            }
         }
 
         private void checkLap(ImageObject player){
-//            if (player.getX() >= 1130 && player.getX() < )
+            if (isInside(player.getX(), player.getY(), 700, 200, 720, 320) &&
+                    player.getCpCount() > 3)  {
+                player1.setLap(player1.getLapCount() + 1);
+                player1.setCpCount(0);
+            }
         }
     }
 
@@ -480,15 +519,6 @@ public class Racing { // incorporating audio, starting traffic light, start menu
         private Vector<Double> coords;
         private int lapCount, cpCount;
 
-
-        public double getWidth() {
-            return xwidth;
-        }
-
-        public double getHeight() {
-            return yheight;
-        }
-
         public ImageObject(double xinput, double yinput, double xwidthinput,
                            double yheightinput, double angleinput) {
             x = xinput;
@@ -498,8 +528,24 @@ public class Racing { // incorporating audio, starting traffic light, start menu
             angle = angleinput;
             internalangle = 0.0;
             velocity = 0.0;
-            lapCount = 0;
+            lapCount = 1;
             cpCount = 0;
+        }
+
+        public double getWidth() {
+            return xwidth;
+        }
+
+        public double getHeight() {
+            return yheight;
+        }
+
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public void setY(double y) {
+            this.y = y;
         }
 
         public double getX() {
